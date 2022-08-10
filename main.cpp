@@ -113,7 +113,7 @@ void listarGenero(int &codGenero, HANDLE hConsole){
     {
         while (fread(&temp, sizeof(Genero), 1, tGenero))
         {
-            std::cout<<temp.ativo<<"-"<<temp.codigo<<"\n";
+            //std::cout<<temp.ativo<<"-"<<temp.codigo<<"\n";
             if (temp.ativo == true)
             {
                 (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
@@ -150,36 +150,26 @@ void deletaGenero(){//verificar se alum filme esta cadastrado com esse genero
     }
     else
     {
-    	
-    	if(){
-    		printf("Digite o codigo do Genero que deseja deletar: ");
-	        scanf("%d", &cod);
-	        
-			
-				
-	        fflush(stdin);
-	        tGenero = fopen("tGenero.txt", "r+");
-	        if (tGenero != NULL)
-	        {
-	            while (fread(&temp, sizeof(Genero), 1, tGenero))
-	            {
-	                if (temp.codigo == cod)
-	                {
-	                	cod--;
-	                    temp.ativo = false;
-						fseek(tGenero, cod*sizeof(Genero), SEEK_SET);
-						
-	                    fwrite(&temp, sizeof(Genero), 1, tGenero);
-	                    fclose(tGenero);
-	                    printf("Genero deletado com sucesso!\n");
-	                    break;
-	                }
-	            }
-	        }
-		}else{
-			
-		}
-        
+        printf("Digite o codigo do Genero que deseja deletar: ");
+        scanf("%d", &cod);
+        cod--;
+        fflush(stdin);
+        tGenero = fopen("tGenero.txt", "r+");
+        if (tGenero != NULL)
+        {
+            while (fread(&temp, sizeof(Genero), 1, tGenero))
+            {
+                if (temp.codigo == cod)
+                {
+                    temp.ativo = false;
+                    fseek(tGenero, cod*sizeof(Genero), SEEK_SET);
+                    fwrite(&temp, sizeof(Genero), 1, tGenero);
+                    fclose(tGenero);
+                    printf("Genero deletado com sucesso!\n");
+                    break;
+                }
+            }
+        }
     }
 }
 //cliente
@@ -394,7 +384,7 @@ void deletaFilme(){//verificar se alum filme esta cadastrado com esse genero
     {
         printf("Digite o codigo do Filme que deseja deletar: ");
         scanf("%d", &cod);
-        
+        cod--;
         fflush(stdin);
         tFilme = fopen("tFilme.txt", "r+");
         if (tFilme != NULL)
@@ -403,7 +393,6 @@ void deletaFilme(){//verificar se alum filme esta cadastrado com esse genero
             {
                 if (temp.codigo == cod)
                 {
-                	cod--;
                     temp.ativo = false;
                     fseek(tFilme, cod*sizeof(Filme), SEEK_SET);
                     fwrite(&temp, sizeof(Filme), 1, tFilme);
@@ -414,6 +403,98 @@ void deletaFilme(){//verificar se alum filme esta cadastrado com esse genero
             }
         }
     }
+}
+
+//funcionario
+void cadastraFuncionario(int &codFuncionario){
+    FILE *tFuncionario;
+    tFuncionario = fopen("tFuncionario.txt", "a+");
+
+    if (tFuncionario != NULL)
+    {
+        Funcionario tempFun;
+        codFuncionario++;
+        tempFun.codfunc = codFuncionario;
+        tempFun.ativo = true;
+
+        printf("Digite o nome do Funcionario: ");
+        scanf("%[^\n]", &tempFun.nome);
+        fflush(stdin);
+        
+        printf("Digite a data de nascimento do Funcionario: ");
+        scanf("%[^\n]", &tempFun.datanasc);
+        fflush(stdin);
+        
+        printf("Digite o RG do Funcionario: ");
+        scanf("%[^\n]", &tempFun.rg);
+        fflush(stdin);
+        
+        printf("Digite o CPF do Funcionario: ");
+        scanf("%[^\n]", &tempFun.cpf);
+        fflush(stdin);
+        
+        printf("Digite o celular do Funcionario: ");
+        scanf("%[^\n]", &tempFun.cel);
+        fflush(stdin);
+        
+        printf("Digite o E-Mail do Funcionario: ");
+        scanf("%[^\n]", &tempFun.email);
+        fflush(stdin);
+        
+        printf("Digite a data de admissao do Funcionario: ");
+        scanf("%[^\n]", &tempFun.dataadm);
+        fflush(stdin);
+        
+
+        fwrite(&tempFun, sizeof(Funcionario), 1, tFuncionario);
+
+        fclose(tFuncionario);
+    }
+}
+void contFuncionario(int &codFuncionario){
+    FILE *tFuncionario;
+    Funcionario temp;
+    int cont = 0;
+    tFuncionario = fopen("tFuncionario.txt", "a+");
+
+    if (tFuncionario != NULL)
+    {
+        while (fread(&temp, sizeof(Funcionario), 1, tFuncionario))
+        {
+            cont++;
+        }
+        codFuncionario = cont;     
+        fclose(tFuncionario);
+    }
+}
+void listarFuncionario(int &codFuncionario, HANDLE hConsole){
+    
+    FILE *tFuncionario;
+    Funcionario temp;
+    int cont = 0;
+    int contTotal = 0;
+    tFuncionario = fopen("tFuncionario.txt", "a+");
+
+    if (tFuncionario != NULL)
+    {
+        while (fread(&temp, sizeof(Funcionario), 1, tFuncionario))
+        {
+            std::cout<<temp.ativo<<"-"<<temp.codfunc<<"\n";
+            if (temp.ativo == true)
+            {
+                (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
+                
+                printf("Codigo: %d\nNome: %s\nData de nascimento: %s\nRG: %s\nCPF: %s\nCelular: %s\nE-Mail: %s\nData de admissao: %s\n", temp.codfunc, temp.nome, temp.datanasc, temp.rg, temp.cpf, temp.cel, temp.email, temp.dataadm);
+                fflush(stdin);
+
+                cont++;
+            }
+            contTotal++;
+        }
+        codFuncionario = contTotal;     
+        fclose(tFuncionario);
+    }
+    SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
 }
 
 
@@ -441,6 +522,7 @@ int main()
     contGenero(codGenero);
 	contFilme(codFilme);
 	contCliente(codCliente);
+	contFuncionario(codFuncionario);
 	
     int menu = 0;
     while (true)
@@ -501,7 +583,6 @@ int main()
 			}else{
 				listarFilme(codFilme,hConsole);
 			}
-        	
             break;
         case 3: // Cadastro e Listar Cliente
             system("CLS");
@@ -520,6 +601,20 @@ int main()
 			}
             break;
         case 4: // Cadastro e Listar funcionário
+        	system("CLS");
+	        printf("1. Cadastrar Funcionario\n");
+	        printf("2. Listar Funcionario\n");
+	        scanf("%d", &verificador);
+	        fflush(stdin);
+	        if(verificador == 1){
+	        	cadastraFuncionario(codFuncionario);
+		        fflush(stdin);
+		        system("CLS");
+			}else{
+				system("CLS");
+				listarFuncionario(codFuncionario, hConsole);
+				fflush(stdin);
+			}
             break;
         case 5: // Cadastro e Listar Locação
             break;
@@ -529,7 +624,6 @@ int main()
         	deletaGenero();
             break;
         case 8: // Excluir Filmes
-        	deletaFilme();
             break;
         case 9: // Excluir Cliente
             break;
