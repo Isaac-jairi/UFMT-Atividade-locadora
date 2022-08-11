@@ -532,20 +532,14 @@ void cadastraLocacao(int &codLocacao, int codfunc, int codcliente){
         tempLoc.codigo = codLocacao;
         tempLoc.ativo = true;
 		
-		fflush(stdin);
-        printf("Digite a data de Locacao: ");
-        scanf("%[^\n]", &tempLoc.dataloca);
-        fflush(stdin);
-        
-        printf("Digite a data de devolucao: ");
-        scanf("%[^\n]", &tempLoc.datadevo);
-        fflush(stdin);
+		tempLoc.dataloca = "10/08";
+		tempLoc.datadevo = "13/08";
         
         do{
             printf("Digite o numero referente ao tipo de pagamento: \n1-A vista \n2-A prazo");
             scanf("%d", &tempLoc.pagamento);
             fflush(stdin);
-        }while((tempLoc.pagamento != 1) || (tempLoc.pagamento != 2));
+        }while(tempLoc.pagamento != 1 || tempLoc.pagamento != 2);
         
         
 		tempLoc.codcliente = codcliente;
@@ -677,6 +671,31 @@ int main()
 			}
             break;
         case 5: // Cadastro e Listar Locação
+        	system("CLS");
+	        printf("1. Cadastrar Locacao\n");
+	        printf("2. Listar Locacao\n");
+	        scanf("%d", &verificador);
+	        fflush(stdin);
+	        
+	        if(verificador == 1){
+	        	int opLocFuncionario, opLocCliente;
+		    	
+		    	fflush(stdin);
+				printf("Selecione o cliente: \n");
+				listarCliente(codCliente, hConsole);
+		        scanf("%d", &opLocCliente);
+		        fflush(stdin);
+		        
+		        printf("Selecione o Funcionario: \n");
+				listarFuncionario(codFuncionario, hConsole);
+		        scanf("%d", &opLocFuncionario);
+		        fflush(stdin);
+		        
+		    	cadastraLocacao(codLocacao, opLocFuncionario, opLocCliente);
+			}else{
+				system("CLS");
+			}
+        	
             break;
         case 6: // Fazer Devolução
             break;
