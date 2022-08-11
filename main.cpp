@@ -52,7 +52,7 @@ typedef struct funcionario
 
 typedef struct locacao
 {
-    int codlocacao;
+    int codigo;
     char dataloca[10];
     char datadevo[10];
     float valortotal;
@@ -60,7 +60,7 @@ typedef struct locacao
     float desc;
     int codcliente;
     int codfunc;
-    char pagamento[1];
+    int pagamento;//1-a vista 2- a prazo
     bool ativo;
 } Locacao;
 
@@ -150,14 +150,27 @@ void deletaGenero(){//verificar se alum filme esta cadastrado com esse genero
     }
     else
     {
-    	
-    	if(){
-    		printf("Digite o codigo do Genero que deseja deletar: ");
-	        scanf("%d", &cod);
-	        
-			
-				
-	        fflush(stdin);
+    	printf("Digite o codigo do Genero que deseja deletar: ");
+	    scanf("%d", &cod);	
+	    fflush(stdin);
+	    
+    	FILE *tFilme;
+	    Filme tempFilme;
+	    int contFK = 0;
+	    tFilme = fopen("tFilme.txt", "a+");
+	
+	    if (tFilme != NULL)
+	    {
+	        while (fread(&tempFilme, sizeof(Filme), 1, tFilme))
+	        {
+	            if(tempFilme.codgenero == cod)
+					contFK++;
+	        } 
+	    }
+	    fclose(tFilme);
+	    
+    	if(contFK == 0 ){
+    		
 	        tGenero = fopen("tGenero.txt", "r+");
 	        if (tGenero != NULL)
 	        {
@@ -177,7 +190,7 @@ void deletaGenero(){//verificar se alum filme esta cadastrado com esse genero
 	            }
 	        }
 		}else{
-			
+			printf("Não foi possivel deletar pois algum filme esta usando esse gênero!\n");
 		}
         
     }
@@ -415,7 +428,134 @@ void deletaFilme(){//verificar se alum filme esta cadastrado com esse genero
         }
     }
 }
+//Funcionario
+void cadastraFuncionario(int &codFuncionario){
+    FILE *tFuncionario;
+    tFuncionario = fopen("tFuncionario.txt", "a+");
 
+    if (tFuncionario != NULL)
+    {
+        Funcionario tempFun;
+        codFuncionario++;
+        tempFun.codfunc = codFuncionario;
+        tempFun.ativo = true;
+
+        printf("Digite o nome do Funcionario: ");
+        scanf("%[^\n]", &tempFun.nome);
+        fflush(stdin);
+        
+        printf("Digite a data de nascimento do Funcionario: ");
+        scanf("%[^\n]", &tempFun.datanasc);
+        fflush(stdin);
+        
+        printf("Digite o RG do Funcionario: ");
+        scanf("%[^\n]", &tempFun.rg);
+        fflush(stdin);
+        
+        printf("Digite o CPF do Funcionario: ");
+        scanf("%[^\n]", &tempFun.cpf);
+        fflush(stdin);
+        
+        printf("Digite o celular do Funcionario: ");
+        scanf("%[^\n]", &tempFun.cel);
+        fflush(stdin);
+        
+        printf("Digite o E-Mail do Funcionario: ");
+        scanf("%[^\n]", &tempFun.email);
+        fflush(stdin);
+        
+        printf("Digite a data de admissao do Funcionario: ");
+        scanf("%[^\n]", &tempFun.dataadm);
+        fflush(stdin);
+        
+
+        fwrite(&tempFun, sizeof(Funcionario), 1, tFuncionario);
+
+        fclose(tFuncionario);
+    }
+}
+void contFuncionario(int &codFuncionario){
+    FILE *tFuncionario;
+    Funcionario temp;
+    int cont = 0;
+    tFuncionario = fopen("tFuncionario.txt", "a+");
+
+    if (tFuncionario != NULL)
+    {
+        while (fread(&temp, sizeof(Funcionario), 1, tFuncionario))
+        {
+            cont++;
+        }
+        codFuncionario = cont;     
+        fclose(tFuncionario);
+    }
+}
+void listarFuncionario(int &codFuncionario, HANDLE hConsole){
+    
+    FILE *tFuncionario;
+    Funcionario temp;
+    int cont = 0;
+    int contTotal = 0;
+    tFuncionario = fopen("tFuncionario.txt", "a+");
+
+    if (tFuncionario != NULL)
+    {
+        while (fread(&temp, sizeof(Funcionario), 1, tFuncionario))
+        {
+            std::cout<<temp.ativo<<"-"<<temp.codfunc<<"\n";
+            if (temp.ativo == true)
+            {
+                (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
+                
+                printf("Codigo: %d\nNome: %s\nData de nascimento: %s\nRG: %s\nCPF: %s\nCelular: %s\nE-Mail: %s\nData de admissao: %s\n", temp.codfunc, temp.nome, temp.datanasc, temp.rg, temp.cpf, temp.cel, temp.email, temp.dataadm);
+                fflush(stdin);
+
+                cont++;
+            }
+            contTotal++;
+        }
+        codFuncionario = contTotal;     
+        fclose(tFuncionario);
+    }
+    SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
+}
+
+//locacao
+void cadastraLocacao(int &codLocacao, int codfunc, int codcliente){
+    FILE *tLocacao;
+    tLocacao = fopen("tLocacao.txt", "a+");
+
+    if (tLocacao != NULL)
+    {
+        Locacao tempLoc;
+        codLocacao++;
+        tempLoc.codigo = codLocacao;
+        tempLoc.ativo = true;
+		
+		fflush(stdin);
+        printf("Digite a data de Locacao: ");
+        scanf("%[^\n]", &tempLoc.dataloca);
+        fflush(stdin);
+        
+        printf("Digite a data de devolucao: ");
+        scanf("%[^\n]", &tempLoc.datadevo);
+        fflush(stdin);
+        
+        do{
+            printf("Digite o numero referente ao tipo de pagamento: \n1-A vista \n2-A prazo");
+            scanf("%d", &tempLoc.pagamento);
+            fflush(stdin);
+        }while((tempLoc.pagamento != 1) || (tempLoc.pagamento != 2));
+        
+        
+		tempLoc.codcliente = codcliente;
+		tempLoc.codfunc = codfunc;
+
+        fwrite(&tempLoc, sizeof(Locacao), 1, tLocacao);
+
+        fclose(tLocacao);
+    }
+}
 
 int main()
 {
@@ -441,6 +581,7 @@ int main()
     contGenero(codGenero);
 	contFilme(codFilme);
 	contCliente(codCliente);
+	contFuncionario(codFuncionario);
 	
     int menu = 0;
     while (true)
@@ -520,6 +661,20 @@ int main()
 			}
             break;
         case 4: // Cadastro e Listar funcionário
+        system("CLS");
+	        printf("1. Cadastrar Funcionario\n");
+	        printf("2. Listar Funcionario\n");
+	        scanf("%d", &verificador);
+	        fflush(stdin);
+	        if(verificador == 1){
+	        	cadastraFuncionario(codFuncionario);
+		        fflush(stdin);
+		        system("CLS");
+			}else{
+				system("CLS");
+				listarFuncionario(codFuncionario, hConsole);
+				fflush(stdin);
+			}
             break;
         case 5: // Cadastro e Listar Locação
             break;
