@@ -15,7 +15,7 @@ typedef struct genero
 
 typedef struct cliente
 {
-    int codcliente;
+    int codigo;
     char nome[80];
     char rg[8];
     char cpf[11];
@@ -39,7 +39,7 @@ typedef struct filme
 
 typedef struct funcionario
 {
-    int codfunc;
+    int codigo;
     char nome[80];
     char datanasc[10];
     char rg[8];
@@ -52,7 +52,7 @@ typedef struct funcionario
 
 typedef struct locacao
 {
-    int codlocacao;
+    int codigo;
     char dataloca[10];
     char datadevo[10];
     float valortotal;
@@ -181,7 +181,7 @@ void cadastraCliente(int &codCliente){
     {
         Cliente tempCli;
         codCliente++;
-        tempCli.codcliente = codCliente;
+        tempCli.codigo = codCliente;
         tempCli.ativo = true;
 
         printf("Digite o nome do Cliente: ");
@@ -246,12 +246,12 @@ void listarCliente(int &codCliente, HANDLE hConsole){
     {
         while (fread(&temp, sizeof(Cliente), 1, tCliente))
         {
-            std::cout<<temp.ativo<<"-"<<temp.codcliente<<"\n";
+            std::cout<<temp.ativo<<"-"<<temp.codigo<<"\n";
             if (temp.ativo == true)
             {
                 (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
                 
-                printf("Codigo: %d\nNome: %s\nRG: %s\nCPF: %s\nE-Mail: %s\nCelular: %s\nEndereco: %s\nData nascimento: %s\n", temp.codcliente, temp.nome, temp.rg, temp.cpf, temp.email, temp.cel, temp.endereco, temp.datanasc);
+                printf("Codigo: %d\nNome: %s\nRG: %s\nCPF: %s\nE-Mail: %s\nCelular: %s\nEndereco: %s\nData nascimento: %s\n", temp.codigo, temp.nome, temp.rg, temp.cpf, temp.email, temp.cel, temp.endereco, temp.datanasc);
                 fflush(stdin);
 
                 cont++;
@@ -262,6 +262,53 @@ void listarCliente(int &codCliente, HANDLE hConsole){
         fclose(tCliente);
     }
     SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
+}
+
+void deletaCliente(){//verificar se alum filme esta cadastrado com esse genero
+    FILE *tCliente;
+    Cliente temp;
+    int cont = 0;
+    int cod;
+    tCliente = fopen("tCliente.txt", "r+");
+    if (tCliente != NULL)
+    {
+        while (fread(&temp, sizeof(Cliente), 1, tCliente))
+        {
+            cont++;
+        }
+        fclose(tCliente);
+    }
+    if (cont == 0)
+    {
+        printf("Não há Clientes cadastrados!\n");
+    }
+    else
+    {
+        printf("Digite o codigo do Cliente que deseja deletar: ");
+        scanf("%d", &cod);
+       
+
+
+        fflush(stdin);
+        tCliente = fopen("tCliente.txt", "r+");
+        if (tCliente != NULL)
+        {
+            while (fread(&temp, sizeof(Cliente), 1, tCliente))
+            {
+                if (temp.codigo == cod)
+                {
+                cod--;
+                    temp.ativo = false;
+fseek(tCliente, cod*sizeof(Cliente), SEEK_SET);
+
+                    fwrite(&temp, sizeof(Cliente), 1, tCliente);
+                    fclose(tCliente);
+                    printf("Cliente deletado com sucesso!\n");
+                    break;
+                }
+            }
+        }
+    }
 }
 
 //filme
@@ -414,7 +461,7 @@ void cadastraFuncionario(int &codFuncionario){
     {
         Funcionario tempFun;
         codFuncionario++;
-        tempFun.codfunc = codFuncionario;
+        tempFun.codigo = codFuncionario;
         tempFun.ativo = true;
 
         printf("Digite o nome do Funcionario: ");
@@ -479,12 +526,12 @@ void listarFuncionario(int &codFuncionario, HANDLE hConsole){
     {
         while (fread(&temp, sizeof(Funcionario), 1, tFuncionario))
         {
-            std::cout<<temp.ativo<<"-"<<temp.codfunc<<"\n";
+            std::cout<<temp.ativo<<"-"<<temp.codigo<<"\n";
             if (temp.ativo == true)
             {
                 (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
                 
-                printf("Codigo: %d\nNome: %s\nData de nascimento: %s\nRG: %s\nCPF: %s\nCelular: %s\nE-Mail: %s\nData de admissao: %s\n", temp.codfunc, temp.nome, temp.datanasc, temp.rg, temp.cpf, temp.cel, temp.email, temp.dataadm);
+                printf("Codigo: %d\nNome: %s\nData de nascimento: %s\nRG: %s\nCPF: %s\nCelular: %s\nE-Mail: %s\nData de admissao: %s\n", temp.codigo, temp.nome, temp.datanasc, temp.rg, temp.cpf, temp.cel, temp.email, temp.dataadm);
                 fflush(stdin);
 
                 cont++;
@@ -497,6 +544,52 @@ void listarFuncionario(int &codFuncionario, HANDLE hConsole){
     SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
 }
 
+void deletaFuncionario(){//verificar se alum filme esta cadastrado com esse genero
+    FILE *tFuncionario;
+    Funcionario temp;
+    int cont = 0;
+    int cod;
+    tFuncionario = fopen("tFuncionario.txt", "r+");
+    if (tFuncionario != NULL)
+    {
+        while (fread(&temp, sizeof(Funcionario), 1, tFuncionario))
+        {
+            cont++;
+        }
+        fclose(tFuncionario);
+    }
+    if (cont == 0)
+    {
+        printf("Não há Funcionarios cadastrados!\n");
+    }
+    else
+    {
+        printf("Digite o codigo do Funcionario que deseja deletar: ");
+        scanf("%d", &cod);
+       
+
+
+        fflush(stdin);
+        tFuncionario = fopen("tFuncionario.txt", "r+");
+        if (tFuncionario != NULL)
+        {
+            while (fread(&temp, sizeof(Funcionario), 1, tFuncionario))
+            {
+                if (temp.codigo == cod)
+                {
+                cod--;
+                    temp.ativo = false;
+fseek(tFuncionario, cod*sizeof(Funcionario), SEEK_SET);
+
+                    fwrite(&temp, sizeof(Funcionario), 1, tFuncionario);
+                    fclose(tFuncionario);
+                    printf("Funcionario deletado com sucesso!\n");
+                    break;
+                }
+            }
+        }
+    }
+}
 
 int main()
 {
@@ -626,8 +719,14 @@ int main()
         case 8: // Excluir Filmes
             break;
         case 9: // Excluir Cliente
+        	system("CLS");
+			deletaCliente();
+			fflush(stdin);
             break;
         case 10: // Excluir Funcionário
+        	system("CLS");
+			deletaFuncionario();
+			fflush(stdin);
             break;
         case 11: // Excluir Locação
             break;
