@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
+#include <time.h>
+#include <locale.h>
 
 using std::string;
 
@@ -15,7 +17,7 @@ typedef struct genero
 
 typedef struct cliente
 {
-    int codcliente;
+    int codigo;
     char nome[80];
     char rg[8];
     char cpf[11];
@@ -39,7 +41,7 @@ typedef struct filme
 
 typedef struct funcionario
 {
-    int codfunc;
+    int codigo;
     char nome[80];
     char datanasc[10];
     char rg[8];
@@ -53,8 +55,8 @@ typedef struct funcionario
 typedef struct locacao
 {
     int codigo;
-    char dataloca[10];
-    char datadevo[10];
+    char dataloca[9];
+    char datadevo[9];
     float valortotal;
     float juro;
     float desc;
@@ -62,7 +64,29 @@ typedef struct locacao
     int codfunc;
     int pagamento;//1-a vista 2- a prazo
     bool ativo;
+    bool pago;
 } Locacao;
+
+typedef struct locacaoTemFilmes
+{
+    int codigo;
+	int codFilme;
+	int codLocacao;
+    bool ativo;
+
+}LocacaoTemFilmes;
+
+typedef struct devolucao
+{
+	int codigo;
+	int codLocacao;
+	char dataloca[9];
+	char datadevo[9];
+	float valororiginal;
+	float valorpago;
+	int diasatraso;
+    bool ativo;
+}Devolucao;
 
 //genero
 void cadastraGenero(int &codGenero){
@@ -146,7 +170,7 @@ void deletaGenero(){//verificar se alum filme esta cadastrado com esse genero
     }
     if (cont == 0)
     {
-        printf("Não há Generos cadastrados!\n");
+        printf("Nï¿½o hï¿½ Generos cadastrados!\n");
     }
     else
     {
@@ -190,11 +214,12 @@ void deletaGenero(){//verificar se alum filme esta cadastrado com esse genero
 	            }
 	        }
 		}else{
-			printf("Não foi possivel deletar pois algum filme esta usando esse gênero!\n");
+			printf("Nï¿½o foi possivel deletar pois algum filme esta usando esse gï¿½nero!\n");
 		}
         
     }
 }
+
 //cliente
 void cadastraCliente(int &codCliente){
     FILE *tCliente;
@@ -204,7 +229,7 @@ void cadastraCliente(int &codCliente){
     {
         Cliente tempCli;
         codCliente++;
-        tempCli.codcliente = codCliente;
+        tempCli.codigo = codCliente;
         tempCli.ativo = true;
 
         printf("Digite o nome do Cliente: ");
@@ -269,12 +294,12 @@ void listarCliente(int &codCliente, HANDLE hConsole){
     {
         while (fread(&temp, sizeof(Cliente), 1, tCliente))
         {
-            std::cout<<temp.ativo<<"-"<<temp.codcliente<<"\n";
+            std::cout<<temp.ativo<<"-"<<temp.codigo<<"\n";
             if (temp.ativo == true)
             {
                 (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
                 
-                printf("Codigo: %d\nNome: %s\nRG: %s\nCPF: %s\nE-Mail: %s\nCelular: %s\nEndereco: %s\nData nascimento: %s\n", temp.codcliente, temp.nome, temp.rg, temp.cpf, temp.email, temp.cel, temp.endereco, temp.datanasc);
+                printf("Codigo: %d\nNome: %s\nRG: %s\nCPF: %s\nE-Mail: %s\nCelular: %s\nEndereco: %s\nData nascimento: %s\n", temp.codigo, temp.nome, temp.rg, temp.cpf, temp.email, temp.cel, temp.endereco, temp.datanasc);
                 fflush(stdin);
 
                 cont++;
@@ -285,6 +310,71 @@ void listarCliente(int &codCliente, HANDLE hConsole){
         fclose(tCliente);
     }
     SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
+}
+void deletaCliente(){//verificar se alum filme esta cadastrado com esse genero
+    FILE *tCliente;
+    Cliente temp;
+    int cont = 0;
+    int cod;
+    tCliente = fopen("tCliente.txt", "r+");
+    if (tCliente != NULL)
+    {
+        while (fread(&temp, sizeof(Cliente), 1, tCliente))
+        {
+            cont++;
+        }
+        fclose(tCliente);
+    }
+    if (cont == 0)
+    {
+        printf("NÃ£o hÃ¡ Cliente cadastrados!\n");
+    }
+    else
+    {
+    	printf("Digite o codigo do Cliente que deseja deletar: ");
+	    scanf("%d", &cod);	
+	    fflush(stdin);
+	    
+    	FILE *tLocacao;
+	    Locacao tempLocacao;
+	    int contFK = 0;
+	    tLocacao = fopen("tLocacao.txt", "a+");
+	
+	    if (tLocacao != NULL)
+	    {
+	        while (fread(&tempLocacao, sizeof(Locacao), 1, tLocacao))
+	        {
+	            if(tempLocacao.codcliente == cod)
+					contFK++;
+	        } 
+	    }
+	    fclose(tLocacao);
+	    
+    	if(contFK == 0 ){
+    		
+	        tCliente = fopen("tCliente.txt", "r+");
+	        if (tCliente != NULL)
+	        {
+	            while (fread(&temp, sizeof(Cliente), 1, tCliente))
+	            {
+	                if (temp.codigo == cod)
+	                {
+	                	cod--;
+	                    temp.ativo = false;
+						fseek(tCliente, cod*sizeof(Cliente), SEEK_SET);
+						
+	                    fwrite(&temp, sizeof(Cliente), 1, tCliente);
+	                    fclose(tCliente);
+	                    printf("Cliente deletado com sucesso!\n");
+	                    break;
+	                }
+	            }
+	        }
+		}else{
+			printf("NÃ£o foi possivel deletar pois esse cliente esta locando um filme!\n");
+		}
+        
+    }
 }
 
 //filme
@@ -308,7 +398,7 @@ void cadastraFilme(int &codFilme, int codGenero){
         scanf("%d", &tempFil.ano);
         fflush(stdin);
         
-        printf("Digite a classificação do Filme: ");
+        printf("Digite a classificaï¿½ï¿½o do Filme: ");
         scanf("%d", &tempFil.classificacao);
         fflush(stdin);
         
@@ -385,6 +475,8 @@ void listarFilme(int &codFilme, HANDLE hConsole){
     }
     SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
 }
+
+
 void deletaFilme(){//verificar se alum filme esta cadastrado com esse genero
     FILE *tFilme;
     Filme temp;
@@ -401,7 +493,7 @@ void deletaFilme(){//verificar se alum filme esta cadastrado com esse genero
     }
     if (cont == 0)
     {
-        printf("Não há Filmes cadastrados!\n");
+        printf("Nao ha Filmes cadastrados!\n");
     }
     else
     {
@@ -428,6 +520,7 @@ void deletaFilme(){//verificar se alum filme esta cadastrado com esse genero
         }
     }
 }
+
 //Funcionario
 void cadastraFuncionario(int &codFuncionario){
     FILE *tFuncionario;
@@ -437,7 +530,7 @@ void cadastraFuncionario(int &codFuncionario){
     {
         Funcionario tempFun;
         codFuncionario++;
-        tempFun.codfunc = codFuncionario;
+        tempFun.codigo = codFuncionario;
         tempFun.ativo = true;
 
         printf("Digite o nome do Funcionario: ");
@@ -502,12 +595,12 @@ void listarFuncionario(int &codFuncionario, HANDLE hConsole){
     {
         while (fread(&temp, sizeof(Funcionario), 1, tFuncionario))
         {
-            std::cout<<temp.ativo<<"-"<<temp.codfunc<<"\n";
+            std::cout<<temp.ativo<<"-"<<temp.codigo<<"\n";
             if (temp.ativo == true)
             {
                 (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
                 
-                printf("Codigo: %d\nNome: %s\nData de nascimento: %s\nRG: %s\nCPF: %s\nCelular: %s\nE-Mail: %s\nData de admissao: %s\n", temp.codfunc, temp.nome, temp.datanasc, temp.rg, temp.cpf, temp.cel, temp.email, temp.dataadm);
+                printf("Codigo: %d\nNome: %s\nData de nascimento: %s\nRG: %s\nCPF: %s\nCelular: %s\nE-Mail: %s\nData de admissao: %s\n", temp.codigo, temp.nome, temp.datanasc, temp.rg, temp.cpf, temp.cel, temp.email, temp.dataadm);
                 fflush(stdin);
 
                 cont++;
@@ -519,38 +612,619 @@ void listarFuncionario(int &codFuncionario, HANDLE hConsole){
     }
     SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
 }
+void deletaFuncionario(){//verificar se alum filme esta cadastrado com esse genero
+    FILE *tFuncionario;
+    Funcionario temp;
+    int cont = 0;
+    int cod;
+    tFuncionario = fopen("tFuncionario.txt", "r+");
+    if (tFuncionario != NULL)
+    {
+        while (fread(&temp, sizeof(Funcionario), 1, tFuncionario))
+        {
+            cont++;
+        }
+        fclose(tFuncionario);
+    }
+    if (cont == 0)
+    {
+        printf("NÃ£o hÃ¡ Funcionarios cadastrados!\n");
+    }
+    else
+    {
+        printf("Digite o codigo do Funcionario que deseja deletar: ");
+        scanf("%d", &cod);
+       
+        fflush(stdin);
+        tFuncionario = fopen("tFuncionario.txt", "r+");
+        if (tFuncionario != NULL)
+        {
+            while (fread(&temp, sizeof(Funcionario), 1, tFuncionario))
+            {
+                if (temp.codigo == cod)
+                {
+                    cod--;
+                    temp.ativo = false;
+                    fseek(tFuncionario, cod*sizeof(Funcionario), SEEK_SET);
+
+                    fwrite(&temp, sizeof(Funcionario), 1, tFuncionario);
+                    fclose(tFuncionario);
+                    printf("Funcionario deletado com sucesso!\n");
+                    break;
+                }
+            }
+        }
+    }
+}
 
 //locacao
-void cadastraLocacao(int &codLocacao, int codfunc, int codcliente){
+void cadastraLocacao(int &codlocacaoTemFilmes, int &codLocacao, int codfunc, int codcliente, int &codFilme, HANDLE hConsole){
     FILE *tLocacao;
     tLocacao = fopen("tLocacao.txt", "a+");
 
+    float valorTotal;
     if (tLocacao != NULL)
     {
         Locacao tempLoc;
         codLocacao++;
         tempLoc.codigo = codLocacao;
         tempLoc.ativo = true;
-		
-		tempLoc.dataloca = "10/08";
-		tempLoc.datadevo = "13/08";
-        
-        do{
-            printf("Digite o numero referente ao tipo de pagamento: \n1-A vista \n2-A prazo");
-            scanf("%d", &tempLoc.pagamento);
+
+        tempLoc.codcliente = codcliente;
+        tempLoc.codfunc = codfunc;
+
+        printf("Digite o numero referente ao tipo de pagamento: \n1-A vista \n2-A prazo");
+        scanf("%d", &tempLoc.pagamento);
+        fflush(stdin);
+
+        int menufilmes = 0;
+        int qtdFilmes = 0;
+        do
+        {
+            qtdFilmes++;
+
+            printf("Digite 1 para adicionar um filme a locacao ou 0 para sair: ");
+            scanf("%d", &menufilmes);
             fflush(stdin);
-        }while(tempLoc.pagamento != 1 || tempLoc.pagamento != 2);
+            if (menufilmes == 1 )
+            {
+                int codAddFilme = 0;
+                listarFilme(codFilme, hConsole);
+
+                printf("Digite o codigo do filme que deseja adicionar: ");
+                scanf("%d", &codAddFilme);
+                fflush(stdin);
+
+                FILE *tFilme;
+
+                Filme temp;
+                tFilme = fopen("tFilme.txt", "a+");
+
+                if (tFilme != NULL)
+                {
+                    while (fread(&temp, sizeof(Filme), 1, tFilme))
+                    {
+                        if (temp.ativo == true)
+                        {
+                            if (temp.codigo == codFilme)
+                            {
+                                valorTotal += temp.valor;
+                                
+                            }
+                        }
+                    }   
+                }
+
+                FILE *tlocacaoTemFilmes;
+                tlocacaoTemFilmes = fopen("tlocacaoTemFilmes.txt", "a+");
+
+                if (tlocacaoTemFilmes != NULL)
+                {
+                    locacaoTemFilmes tempFilme;
+                    codlocacaoTemFilmes++;
+                    tempFilme.codigo = codlocacaoTemFilmes;
+                    tempFilme.ativo = true;
+
+                    tempFilme.codLocacao = tempLoc.codigo;
+                    tempFilme.codFilme = codAddFilme;
+                    fwrite(&tempFilme, sizeof(locacaoTemFilmes), 1, tlocacaoTemFilmes);
+
+                    fclose(tlocacaoTemFilmes);
+                }
+            }
+            
+        } while (menufilmes != 0);
         
+        int qtdDiasDevolucao = qtdFilmes > 3 ? 4 : 3;
+
+        char diaChar[2];
+
+        _strdate(tempLoc.dataloca);
         
-		tempLoc.codcliente = codcliente;
-		tempLoc.codfunc = codfunc;
+        int dia;
+        char c[3];
+        c[0]=tempLoc.dataloca[0];
+        c[1]=tempLoc.dataloca[1];
+        dia=atoi(c) + qtdDiasDevolucao;
+
+        sprintf(diaChar, "%d", dia);
+
+        strcpy(tempLoc.datadevo, tempLoc.dataloca);
+        
+        tempLoc.datadevo[0]=diaChar[0];
+        tempLoc.datadevo[1]=diaChar[1];
+
+
+        tempLoc.valortotal = valorTotal;
+
+        tempLoc.juro = valorTotal;
+
+        tempLoc.desc = valorTotal - (valorTotal * 0.05);
+
 
         fwrite(&tempLoc, sizeof(Locacao), 1, tLocacao);
+        system("cls");
+        printf("Locacao cadastrada com sucesso!\n");
+        fclose(tLocacao);
+    }
+}
+void contLocacao(int &codLocacao){
+    FILE *tLocacao;
+    Locacao temp;
+    int cont = 0;
+    tLocacao = fopen("tLocacao.txt", "a+");
 
+    if (tLocacao != NULL)
+    {
+        while (fread(&temp, sizeof(Locacao), 1, tLocacao))
+        {
+            cont++;
+        }
+        codLocacao = cont;     
         fclose(tLocacao);
     }
 }
 
+void deletaLocacao(){//verificar se alum Locacao esta cadastrado com esse genero
+    FILE *tLocacao;
+    Locacao temp;
+    int cont = 0;
+    int cod;
+    tLocacao = fopen("tLocacao.txt", "r+");
+    if (tLocacao != NULL)
+    {
+        while (fread(&temp, sizeof(Locacao), 1, tLocacao))
+        {
+            cont++;
+        }
+        fclose(tLocacao);
+    }
+    if (cont == 0)
+    {
+        printf("Nao ha Locacoes cadastrados!\n");
+    }
+    else
+    {
+        printf("Digite o codigo da Locacao que deseja deletar: ");
+        scanf("%d", &cod);
+        
+        fflush(stdin);
+        tLocacao = fopen("tLocacao.txt", "r+");
+        if (tLocacao != NULL)
+        {
+            while (fread(&temp, sizeof(Locacao), 1, tLocacao))
+            {
+                if (temp.codigo == cod)
+                {
+                	cod--;
+                    temp.ativo = false;
+                    fseek(tLocacao, cod*sizeof(Locacao), SEEK_SET);
+                    fwrite(&temp, sizeof(Locacao), 1, tLocacao);
+                    fclose(tLocacao);
+                    printf("Locacao deletada com sucesso!\n");
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void listarLocacao(int &codLocacao, HANDLE hConsole){
+    FILE *tLocacao;
+    Locacao tempLocacao;
+    int cont = 0;
+    int contTotal = 0;
+    char nomeClienteTemp[80];
+    char nomeFuncionarioTemp[80];
+    tLocacao = fopen("tLocacao.txt", "a+");
+
+    if (tLocacao != NULL)
+    {
+        while (fread(&tempLocacao, sizeof(Locacao), 1, tLocacao))
+        {
+            std::cout<<tempLocacao.ativo<<"-"<<tempLocacao.codigo<<"\n";
+            if (tempLocacao.ativo == true)
+            {
+                (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
+                
+				FILE *tCliente;
+			    Cliente tempCliente;
+			    
+			    tCliente = fopen("tCliente.txt", "a+");
+			    if (tCliente != NULL)
+			    {
+			        while (fread(&tempCliente, sizeof(Cliente), 1, tCliente))
+			        {
+			            if (tempCliente.ativo == true)
+			            {
+			            	if(tempCliente.codigo == tempLocacao.codcliente){
+			            		strcpy(nomeClienteTemp, tempCliente.nome);
+							}
+			            }
+			        }   
+			    }
+			    fclose(tCliente);
+
+				FILE *tFuncionario;
+			    Funcionario tempFuncionario;
+                
+			    tFuncionario = fopen("tFuncionario.txt", "a+");
+			    if (tFuncionario != NULL)
+			    {
+			        while (fread(&tempFuncionario, sizeof(Funcionario), 1, tFuncionario))
+			        {
+			            if (tempFuncionario.ativo == true)
+			            {
+			            	if(tempFuncionario.codigo == tempLocacao.codfunc){
+			            		strcpy(nomeFuncionarioTemp, tempFuncionario.nome);
+							}
+			            }
+			        }   
+			    }
+			    fclose(tFuncionario);
+			    
+                printf("Codigo: %d \nData de devolucao: %s \nData de locacao:%s \nNome do cliente: %s \nNome do funcionario: %s \nTipo de pagamento: %s\nValor total: %f \n  \n", tempLocacao.codigo, tempLocacao.datadevo, tempLocacao.dataloca, nomeClienteTemp, nomeFuncionarioTemp, tempLocacao.pagamento == 1 ? "A vista" : "A prazo", tempLocacao.valortotal);
+
+                cont++;
+            }
+            contTotal++;
+        }
+        codLocacao = contTotal;     
+    }
+    fclose(tLocacao);
+    SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
+}
+void listarLocacaoEmAtraso(int &codLocacao, HANDLE hConsole){
+    FILE *tLocacao;
+    Locacao tempLocacao;
+    int cont = 0;
+    int contTotal = 0;
+    char nomeClienteTemp[80];
+    char nomeFuncionarioTemp[80];
+    tLocacao = fopen("tLocacao.txt", "a+");
+
+    char dataConsulta[9];
+    printf("Informe a data Para verificacao XX/XX/XX: ");
+    scanf("%s", dataConsulta);
+    fflush(stdin);
+
+    int diaPesquisa, dia;
+    char c[3];
+    c[0]=dataConsulta[0];
+    c[1]=dataConsulta[1];
+    diaPesquisa=atoi(c);
+
+    if (tLocacao != NULL)
+    {
+        while (fread(&tempLocacao, sizeof(Locacao), 1, tLocacao))
+        {
+            c[0]=tempLocacao.datadevo[0];
+            c[1]=tempLocacao.datadevo[1];
+            dia=atoi(c);
+
+            if(dia>diaPesquisa){
+                std::cout<<tempLocacao.ativo<<"-"<<tempLocacao.codigo<<"\n";
+                if (tempLocacao.ativo == true)
+                {
+                    (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
+                    
+                    FILE *tCliente;
+                    Cliente tempCliente;
+                    
+                    tCliente = fopen("tCliente.txt", "a+");
+                    if (tCliente != NULL)
+                    {
+                        while (fread(&tempCliente, sizeof(Cliente), 1, tCliente))
+                        {
+                            if (tempCliente.ativo == true)
+                            {
+                                if(tempCliente.codigo == tempLocacao.codcliente){
+                                    strcpy(nomeClienteTemp, tempCliente.nome);
+                                }
+                            }
+                        }   
+                    }
+                    fclose(tCliente);
+
+                    FILE *tFuncionario;
+                    Funcionario tempFuncionario;
+                    
+                    tFuncionario = fopen("tFuncionario.txt", "a+");
+                    if (tFuncionario != NULL)
+                    {
+                        while (fread(&tempFuncionario, sizeof(Funcionario), 1, tFuncionario))
+                        {
+                            if (tempFuncionario.ativo == true)
+                            {
+                                if(tempFuncionario.codigo == tempLocacao.codfunc){
+                                    strcpy(nomeFuncionarioTemp, tempFuncionario.nome);
+                                }
+                            }
+                        }   
+                    }
+                    fclose(tFuncionario);
+                    
+                    printf("Codigo: %d \nData de devolucao: %s \nData de locacao:%s \nNome do cliente: %s \nNome do funcionario: %s \nTipo de pagamento: %s\nValor total: %f \n  \n", tempLocacao.codigo, tempLocacao.datadevo, tempLocacao.dataloca, nomeClienteTemp, nomeFuncionarioTemp, tempLocacao.pagamento == 1 ? "A vista" : "A prazo", tempLocacao.valortotal);
+
+                    cont++;
+                }
+            }
+            contTotal++;
+        }
+        codLocacao = contTotal;     
+    }
+    fclose(tLocacao);
+    SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
+}
+
+void listarLocacaoEspecifica(int &codLocacao, HANDLE hConsole){
+    FILE *tLocacao;
+    Locacao tempLocacao;
+    int cont = 0;
+    int contTotal = 0;
+    char nomeClienteTemp[80];
+    char nomeFuncionarioTemp[80];
+    tLocacao = fopen("tLocacao.txt", "a+");
+
+    char datalocacaoConsulta[9];
+    printf("Informe a data de locaÃ§Ã£o XX/XX/XX: ");
+    scanf("%s", datalocacaoConsulta);
+    fflush(stdin);
+
+    int diaPesquisa, dia;
+    char c[3];
+    c[0]=datalocacaoConsulta[0];
+    c[1]=datalocacaoConsulta[1];
+    diaPesquisa=atoi(c);
+
+    if (tLocacao != NULL)
+    {
+        while (fread(&tempLocacao, sizeof(Locacao), 1, tLocacao))
+        {
+            c[0]=tempLocacao.dataloca[0];
+            c[1]=tempLocacao.dataloca[1];
+            dia=atoi(c);
+            if (tempLocacao.ativo == true)
+            {
+                //std::cout<<tempLocacao.ativo<<"-"<<tempLocacao.codigo<<"\n";
+                if(diaPesquisa == dia){
+                    (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
+                    
+                    FILE *tCliente;
+                    Cliente tempCliente;
+                    
+                    tCliente = fopen("tCliente.txt", "a+");
+                    if (tCliente != NULL)
+                    {
+                        while (fread(&tempCliente, sizeof(Cliente), 1, tCliente))
+                        {
+                            if (tempCliente.ativo == true)
+                            {
+                                if(tempCliente.codigo == tempLocacao.codcliente){
+                                    strcpy(nomeClienteTemp, tempCliente.nome);
+                                }
+                            }
+                        }   
+                    }
+                    fclose(tCliente);
+
+                    FILE *tFuncionario;
+                    Funcionario tempFuncionario;
+                    
+                    tFuncionario = fopen("tFuncionario.txt", "a+");
+                    if (tFuncionario != NULL)
+                    {
+                        while (fread(&tempFuncionario, sizeof(Funcionario), 1, tFuncionario))
+                        {
+                            if (tempFuncionario.ativo == true)
+                            {
+                                if(tempFuncionario.codigo == tempLocacao.codfunc){
+                                    strcpy(nomeFuncionarioTemp, tempFuncionario.nome);
+                                }
+                            }
+                        }   
+                    }
+                    fclose(tFuncionario);
+                    
+                    printf("Codigo: %d \nData de devolucao: %s \nData de locacao:%s \nNome do cliente: %s \nNome do funcionario: %s \nTipo de pagamento: %s\nValor total: %f \n  \n", tempLocacao.codigo, tempLocacao.datadevo, tempLocacao.dataloca, nomeClienteTemp, nomeFuncionarioTemp, tempLocacao.pagamento == 1 ? "A vista" : "A prazo", tempLocacao.valortotal);
+
+                    cont++;
+                }
+            }
+            contTotal++;
+        }
+        codLocacao = contTotal;     
+    }
+    fclose(tLocacao);
+    SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
+}
+
+//locacaoTemFilmes
+void contLocacaoTemFilmes(int &codlocacaoTemFilmes){
+    FILE *tlocacaoTemFilmes;
+    locacaoTemFilmes temp;
+    int cont = 0;
+    tlocacaoTemFilmes = fopen("tlocacaoTemFilmes.txt", "a+");
+
+    if (tlocacaoTemFilmes != NULL)
+    {
+        while (fread(&temp, sizeof(locacaoTemFilmes), 1, tlocacaoTemFilmes))
+        {
+            cont++;
+        }
+        codlocacaoTemFilmes = cont;     
+        fclose(tlocacaoTemFilmes);
+    }
+}
+
+
+//devolucao
+void cadastraDevolucao(int &coddevolucao, int codLocacao){
+    FILE *tdevolucao;
+    tdevolucao = fopen("tdevolucao.txt", "a+");
+
+    if (tdevolucao != NULL)
+    {
+        devolucao tempDev;
+        coddevolucao++;
+        tempDev.codigo = coddevolucao;
+        tempDev.ativo = true;
+
+        tempDev.codLocacao = codLocacao;
+
+
+
+        printf("Informe a data de devoluÃ§Ã£o XX/XX/XX: ");
+        scanf("%s", tempDev.datadevo);
+        fflush(stdin);
+        
+        FILE *tLocacao;
+
+        Locacao tempLoc;
+        tLocacao = fopen("tLocacao.txt", "a+");
+
+        if (tLocacao != NULL)
+        {
+            while (fread(&tempLoc, sizeof(Locacao), 1, tLocacao))
+            {
+                if (tempLoc.ativo == true)
+                {
+                    if (tempLoc.codigo == codLocacao)
+                    {
+                        strcpy(tempDev.dataloca, tempLoc.dataloca);
+                        
+                    }
+                }
+            }   
+        }
+        fclose(tLocacao);
+
+        
+        // if datadevo > dataloca, valorpago =  valortotal * diasatraso
+
+        int diaLocacao, diaDevolucao, diaDevolucaoReal;
+        char c[3];
+
+        c[0]=tempLoc.dataloca[0];
+        c[1]=tempLoc.dataloca[1];
+        diaLocacao=atoi(c);
+
+        c[0]=tempLoc.datadevo[0];
+        c[1]=tempLoc.datadevo[1];
+        diaDevolucao=atoi(c);
+        
+        c[0]=tempDev.datadevo[0];
+        c[1]=tempDev.datadevo[1];
+        diaDevolucaoReal=atoi(c);
+
+        tempDev.valororiginal = tempLoc.valortotal;
+        tempDev.diasatraso = diaDevolucaoReal-diaDevolucao;
+
+        if(diaDevolucaoReal>diaDevolucao){
+            tempDev.valorpago = tempLoc.juro * (diaDevolucaoReal-diaDevolucao);
+        }
+        else{
+            if (tempLoc.pagamento == 1){
+                tempDev.valorpago = tempLoc.desc;
+                
+            }else{
+                tempDev.valorpago = tempLoc.valortotal;
+            }
+        }
+        
+
+        fwrite(&tempDev, sizeof(devolucao), 1, tdevolucao);
+        system("cls");
+        printf("Devolucao cadastrada com sucesso!\n");
+        fclose(tdevolucao);
+
+        Locacao tempLocacao;
+        tLocacao = fopen("tLocacao.txt", "r+");
+        if (tLocacao != NULL)
+        {
+            while (fread(&tempLocacao, sizeof(Locacao), 1, tLocacao))
+            {
+                if (tempLocacao.codigo == codLocacao)
+                {
+                	codLocacao--;
+                    tempLocacao.ativo = false;
+                    fseek(tLocacao, codLocacao*sizeof(Locacao), SEEK_SET);
+                    fwrite(&tempLocacao, sizeof(Locacao), 1, tLocacao);
+                    fclose(tLocacao);
+                    break;
+                }
+            }
+        }
+
+    }
+}
+
+void listarDevolucao(int &codDevolucao, HANDLE hConsole){
+    
+    FILE *tDevolucao;
+    Devolucao temp;
+    int cont = 0;
+    int contTotal = 0;
+    tDevolucao = fopen("tDevolucao.txt", "a+");
+
+    if (tDevolucao != NULL)
+    {
+        while (fread(&temp, sizeof(Devolucao), 1, tDevolucao))
+        {
+           // std::cout<<temp.ativo<<"-"<<temp.codigo<<"\n";
+            if (temp.ativo == true)
+            {
+                (cont % 2 == 0) ? SetConsoleTextAttribute(hConsole,FOREGROUND_BLUE):  SetConsoleTextAttribute(hConsole,FOREGROUND_GREEN);//alterna cor console
+                
+                printf("Codigo: %d \nCodigo da locacao: %d \nData locacao: %s \nData Devolucao: %s \nValor Original: %f \nValor pago: %f \nDias de atraso: %d\n\n", temp.codigo, temp.codLocacao, temp.dataloca, temp.datadevo, temp.valororiginal, temp.valorpago, temp.diasatraso <= 0 ? 0 : temp.diasatraso);
+                fflush(stdin);
+
+                cont++;
+            }
+            contTotal++;
+        }
+        codDevolucao = contTotal;     
+        fclose(tDevolucao);
+    }
+    SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
+}
+
+void contDevolucao(int &codDevolucao){
+    FILE *tDevolucao;
+    Devolucao temp;
+    int cont = 0;
+    tDevolucao = fopen("tDevolucao.txt", "a+");
+
+    if (tDevolucao != NULL)
+    {
+        while (fread(&temp, sizeof(Devolucao), 1, tDevolucao))
+        {
+            cont++;
+        }
+        codDevolucao = cont;     
+        fclose(tDevolucao);
+    }
+}
 int main()
 {
     // variaveis controladoras de codigo
@@ -559,24 +1233,32 @@ int main()
     int codCliente = 1;
     int codFuncionario = 1;
     int codLocacao = 1;
+    int codlocacaoTemFilmes = 1;
+    int codDevolucao = 1;
 
-    // Criação e inicialização dos arquivos.
+    // Criaï¿½ï¿½o e inicializaï¿½ï¿½o dos arquivos.
     FILE *tGenero;
     FILE *tFilme;
     FILE *tCliente;
     FILE *tFuncionario;
     FILE *tLocacao;
+    FILE *tlocacaoTemFilmes;
+    FILE *tDevolucao;
 
     //define cor do console
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole,FOREGROUND_INTENSITY);
 
-    //contabiliza registros ou cria arquivo caso não exista
+    //contabiliza registros ou cria arquivo caso nï¿½o exista
     contGenero(codGenero);
 	contFilme(codFilme);
 	contCliente(codCliente);
 	contFuncionario(codFuncionario);
-	
+	contLocacao(codLocacao);
+    contLocacaoTemFilmes(codlocacaoTemFilmes);
+    contDevolucao(codDevolucao);
+
+    
     int menu = 0;
     while (true)
     {
@@ -603,7 +1285,7 @@ int main()
         
         switch (menu)
         {
-        case 1: // Cadastro e Listar Gênero
+        case 1: // Cadastro e Listar Gï¿½nero
             system("CLS");
 	        printf("1. Cadastrar genero\n");
 	        printf("2. Listar genero\n");
@@ -654,7 +1336,7 @@ int main()
 				fflush(stdin);
 			}
             break;
-        case 4: // Cadastro e Listar funcionário
+        case 4: // Cadastro e Listar funcionï¿½rio
         system("CLS");
 	        printf("1. Cadastrar Funcionario\n");
 	        printf("2. Listar Funcionario\n");
@@ -670,7 +1352,7 @@ int main()
 				fflush(stdin);
 			}
             break;
-        case 5: // Cadastro e Listar Locação
+        case 5: // Cadastro e Listar Locaï¿½ï¿½o
         	system("CLS");
 	        printf("1. Cadastrar Locacao\n");
 	        printf("2. Listar Locacao\n");
@@ -690,36 +1372,60 @@ int main()
 				listarFuncionario(codFuncionario, hConsole);
 		        scanf("%d", &opLocFuncionario);
 		        fflush(stdin);
-		        
-		    	cadastraLocacao(codLocacao, opLocFuncionario, opLocCliente);
+				system("CLS");
+                // print codLocacao
+		        cadastraLocacao(codlocacaoTemFilmes, codLocacao, opLocFuncionario, opLocCliente, codFilme ,hConsole);
 			}else{
 				system("CLS");
+                listarLocacao(codLocacao, hConsole);
 			}
         	
             break;
-        case 6: // Fazer Devolução
+        case 6: // Fazer Devolucao
+            int codDevolucaoLocacao;
+
+            system("CLS");
+            listarLocacao(codLocacao, hConsole);
+            printf("Digite o codigo da locacao que deseja devolver: ");
+            scanf("%d", &codDevolucaoLocacao);
+            fflush(stdin);
+            cadastraDevolucao(codDevolucao, codDevolucaoLocacao);
+
             break;
-        case 7: // Excluir gênero
+        case 7: // Excluir gï¿½nero
         	deletaGenero();
             break;
         case 8: // Excluir Filmes
         	deletaFilme();
             break;
         case 9: // Excluir Cliente
+            system("CLS");
+			deletaCliente();
+			fflush(stdin);
             break;
-        case 10: // Excluir Funcionário
+        case 10: // Excluir Funcionï¿½rio
+            system("CLS");
+			deletaFuncionario();
+			fflush(stdin);
             break;
-        case 11: // Excluir Locação
+        case 11: // Excluir Locaï¿½ï¿½o
+            system("CLS");
+            deletaLocacao();
             break;
-        case 12: // Listar locação data especifica
+        case 12: // Listar locaï¿½ï¿½o data especifica
+            system("CLS");
+            listarLocacaoEspecifica(codLocacao, hConsole);
             break;
         case 13: // Listar filmes em atraso
+            system("CLS");
+            listarLocacaoEmAtraso(codLocacao, hConsole);
             break;
-        case 14: // Listar devolução
+        case 14: // Listar devoluï¿½ï¿½o
+            system("CLS");
+            listarDevolucao(codDevolucao, hConsole);
             break;
         case 15: // Sair
             break;
         }
     }
 }
-
